@@ -4,7 +4,7 @@ import {
   deleteGalleryImage,
   fetchGalleryImages,
   getCurrentAdmin,
-  getStoredAuth,
+  clearAuth,
 } from '../lib/api'
 
 const initialFormData = {
@@ -17,7 +17,7 @@ const visibleGalleryCount = 6
 function GalleryPage({ isAuthenticated = false, onReady }) {
   const [galleryImages, setGalleryImages] = useState([])
   const [activeIndex, setActiveIndex] = useState(null)
-  const [adminToken, setAdminToken] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [formData, setFormData] = useState(initialFormData)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -51,23 +51,23 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
 
   useEffect(() => {
     let isMounted = true
-    const storedAuth = getStoredAuth()
 
-    if (!isAuthenticated || !storedAuth?.token) {
-      setAdminToken('')
+    if (!isAuthenticated) {
+      setIsAdmin(false)
       setIsEditorOpen(false)
       return undefined
     }
 
-    getCurrentAdmin(storedAuth.token)
-      .then(() => {
+    getCurrentAdmin()
+      .then((user) => {
         if (isMounted) {
-          setAdminToken(storedAuth.token)
+          setIsAdmin(user?.user_metadata?.is_admin === true)
         }
       })
       .catch(() => {
         if (isMounted) {
-          setAdminToken('')
+          clearAuth()
+          setIsAdmin(false)
         }
       })
 
@@ -131,7 +131,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
     setError('')
 
     try {
-      await createGalleryImage(adminToken, formData)
+      await createGalleryImage(formData)
       setFormData(initialFormData)
       form.reset()
       setIsEditorOpen(false)
@@ -146,7 +146,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
   const removeImage = async (image) => {
     setIsSaving(true)
     try {
-      await deleteGalleryImage(adminToken, image.id)
+      await deleteGalleryImage(image.id)
       setActiveIndex(null)
       await loadGallery()
     } catch (deleteError) {
@@ -161,10 +161,10 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
       <div className="gallery-heading">
         <div>
           <p className="eyebrow">En images</p>
-          <h2>Les interventions et le matériel en galerie.</h2>
+          <h2>Les interventions et le materiel en galerie.</h2>
         </div>
 
-        {adminToken && (
+        {isAdmin && (
           <button
             type="button"
             className="cta-button gallery-add-button"
@@ -175,7 +175,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
         )}
       </div>
 
-      {adminToken && isEditorOpen && (
+      {isAdmin && isEditorOpen && (
         <form className="gallery-admin-form" onSubmit={submitImage}>
           <label>
             Titre
@@ -188,7 +188,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
               required
             />
             <span className="field-hint">
-              {formData.title.length}/160 caractères
+              {formData.title.length}/160 caracteres
             </span>
           </label>
 
@@ -219,7 +219,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
       {isLoading && <p className="empty-results">Chargement de la galerie...</p>}
 
       {!isLoading && galleryImages.length === 0 && (
-        <p className="empty-results">Aucune photo n'est publiée pour le moment.</p>
+        <p className="empty-results">Aucune photo n'est publiee pour le moment.</p>
       )}
 
       {visibleGalleryImages.length > 0 && (
@@ -240,7 +240,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
                 <span>{image.title}</span>
               </button>
 
-              {adminToken && (
+              {isAdmin && (
                 <button
                   type="button"
                   className="secondary-button gallery-delete-button"
@@ -284,7 +284,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
               <button
                 type="button"
                 className="gallery-arrow gallery-arrow-left"
-                aria-label="Image précédente"
+                aria-label="Image precedente"
                 onClick={showPreviousImage}
               >
                 {'<'}
@@ -305,7 +305,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
               </figcaption>
             </figure>
 
-            {adminToken && (
+            {isAdmin && (
               <button
                 type="button"
                 className="secondary-button gallery-modal-delete"

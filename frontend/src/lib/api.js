@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api'
+import { supabase } from './supabase'
 
 export const authStorageKey = 'rc_admin_auth'
 
@@ -19,356 +19,341 @@ export function clearAuth() {
   window.localStorage.removeItem(authStorageKey)
 }
 
+// ─── Auth ───────────────────────────────────────────────────
+
 export async function loginAdmin(credentials) {
-  const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: credentials.email ?? credentials.username,
+    password: credentials.password,
   })
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
+  if (error) {
     throw new Error(
-      data.non_field_errors?.[0] ??
-        data.detail ??
-        'Connexion impossible. Vérifiez les identifiants.',
+      error.message === 'Invalid login credentials'
+        ? 'Identifiants invalides.'
+        : error.message ?? 'Connexion impossible. Verifiez les identifiants.',
     )
   }
 
+  storeAuth(data)
   return data
 }
 
-export async function getCurrentAdmin(token) {
-  const response = await fetch(`${API_BASE_URL}/auth/me/`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error('Session expirée.')
+export async function getCurrentAdmin() {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    throw new Error('Session expiree.')
   }
-
-  return response.json()
+  return user
 }
+
+// ─── Sales ──────────────────────────────────────────────────
 
 export async function fetchSales() {
-  const response = await fetch(`${API_BASE_URL}/sales/`)
+  const { data, error } = await supabase
+    .from('sales')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-  if (!response.ok) {
-    throw new Error('Impossible de récupérer les pièces et accessoires.')
+  if (error) {
+    throw new Error('Impossible de recuperer les pieces et accessoires.')
   }
 
-  return response.json()
+  return data
 }
 
-function buildSaleFormData(saleData) {
-  const formData = new FormData()
-  formData.append('title', saleData.title)
-  formData.append('description', saleData.description)
-  formData.append('price', saleData.price)
-  formData.append('is_sold', saleData.is_sold ? 'true' : 'false')
+export async function createSale(saleData) {
+  let photoUrl = null
 
   if (saleData.photo) {
-    formData.append('photo', saleData.photo)
+    const fileName = `${crypto.randomUUID()}.jpg`
+    const { error: uploadError } = await supabase.storage
+      .from('sales')
+      .upload(fileName, saleData.photo)
+
+    if (uploadError) {
+      throw new Error("Impossible d'ajouter cette photo.")
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('sales')
+      .getPublicUrl(fileName)
+    photoUrl = urlData.publicUrl
   }
 
-  return formData
-}
+  const { data, error } = await supabase
+    .from('sales')
+    .insert({
+      title: saleData.title,
+      description: saleData.description,
+      price: saleData.price,
+      is_sold: saleData.is_sold,
+      photo_url: photoUrl,
+    })
+    .select()
+    .single()
 
-export async function createSale(token, saleData) {
-  const response = await fetch(`${API_BASE_URL}/sales/`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: buildSaleFormData(saleData),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(data.detail ?? 'Impossible d’ajouter cette donnée.')
-  }
-
-  return data
-}
-
-export async function updateSale(token, saleId, saleData) {
-  const response = await fetch(`${API_BASE_URL}/sales/${saleId}/`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: buildSaleFormData(saleData),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(data.detail ?? 'Impossible de modifier cette donnée.')
+  if (error) {
+    throw new Error(error.message ?? "Impossible d'ajouter cette donnee.")
   }
 
   return data
 }
 
-export async function deleteSale(token, saleId) {
-  const response = await fetch(`${API_BASE_URL}/sales/${saleId}/`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+export async function updateSale(saleId, saleData) {
+  const updateData = {
+    title: saleData.title,
+    description: saleData.description,
+    price: saleData.price,
+    is_sold: saleData.is_sold,
+  }
 
-  if (!response.ok) {
-    throw new Error('Impossible de supprimer cette donnée.')
+  if (saleData.photo) {
+    const fileName = `${crypto.randomUUID()}.jpg`
+    const { error: uploadError } = await supabase.storage
+      .from('sales')
+      .upload(fileName, saleData.photo)
+
+    if (uploadError) {
+      throw new Error('Impossible de modifier cette donnee.')
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('sales')
+      .getPublicUrl(fileName)
+    updateData.photo_url = urlData.publicUrl
+  }
+
+  const { data, error } = await supabase
+    .from('sales')
+    .update(updateData)
+    .eq('id', saleId)
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error('Impossible de modifier cette donnee.')
+  }
+
+  return data
+}
+
+export async function deleteSale(saleId) {
+  const { data: sale } = await supabase
+    .from('sales')
+    .select('photo_url')
+    .eq('id', saleId)
+    .single()
+
+  if (sale?.photo_url) {
+    const path = sale.photo_url.split('/storage/v1/object/public/')[1]
+    if (path) {
+      await supabase.storage.from('sales').remove([path])
+    }
+  }
+
+  const { error } = await supabase
+    .from('sales')
+    .delete()
+    .eq('id', saleId)
+
+  if (error) {
+    throw new Error('Impossible de supprimer cette donnee.')
   }
 }
+
+// ─── Gallery ────────────────────────────────────────────────
 
 export async function fetchGalleryImages() {
-  const response = await fetch(`${API_BASE_URL}/gallery-images/`)
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-  if (!response.ok) {
-    throw new Error('Impossible de récupérer la galerie.')
-  }
-
-  return response.json()
-}
-
-function getApiErrorMessage(data, fallback) {
-  if (data.detail) {
-    return data.detail
-  }
-
-  if (data.non_field_errors?.[0]) {
-    return data.non_field_errors[0]
-  }
-
-  const fieldLabels = {
-    title: 'Titre',
-    photo: 'Photo',
-  }
-  const fieldError = Object.entries(data).find(([, value]) =>
-    Array.isArray(value) ? value.length > 0 : Boolean(value),
-  )
-
-  if (fieldError) {
-    const [fieldName, messages] = fieldError
-    const message = Array.isArray(messages) ? messages[0] : messages
-    return `${fieldLabels[fieldName] ?? fieldName} : ${message}`
-  }
-
-  return fallback
-}
-
-function buildGalleryImageFormData(imageData) {
-  const formData = new FormData()
-  formData.append('title', imageData.title)
-
-  if (imageData.photo) {
-    formData.append('photo', imageData.photo)
-  }
-
-  return formData
-}
-
-export async function createGalleryImage(token, imageData) {
-  const response = await fetch(`${API_BASE_URL}/gallery-images/`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: buildGalleryImageFormData(imageData),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(getApiErrorMessage(data, 'Impossible d’ajouter cette photo.'))
+  if (error) {
+    throw new Error('Impossible de recuperer la galerie.')
   }
 
   return data
 }
 
-export async function deleteGalleryImage(token, imageId) {
-  const response = await fetch(`${API_BASE_URL}/gallery-images/${imageId}/`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+export async function createGalleryImage(imageData) {
+  let photoUrl = null
 
-  if (!response.ok) {
+  if (imageData.photo) {
+    const fileName = `${crypto.randomUUID()}.jpg`
+    const { error: uploadError } = await supabase.storage
+      .from('gallery')
+      .upload(fileName, imageData.photo)
+
+    if (uploadError) {
+      throw new Error("Impossible d'ajouter cette photo.")
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('gallery')
+      .getPublicUrl(fileName)
+    photoUrl = urlData.publicUrl
+  }
+
+  const { data, error } = await supabase
+    .from('gallery_images')
+    .insert({
+      title: imageData.title,
+      photo_url: photoUrl,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    if (error.message?.includes('blank')) {
+      throw new Error('Le titre est obligatoire.')
+    }
+    throw new Error(error.message ?? "Impossible d'ajouter cette photo.")
+  }
+
+  return data
+}
+
+export async function deleteGalleryImage(imageId) {
+  const { data: image } = await supabase
+    .from('gallery_images')
+    .select('photo_url')
+    .eq('id', imageId)
+    .single()
+
+  if (image?.photo_url) {
+    const path = image.photo_url.split('/storage/v1/object/public/')[1]
+    if (path) {
+      await supabase.storage.from('gallery').remove([path])
+    }
+  }
+
+  const { error } = await supabase
+    .from('gallery_images')
+    .delete()
+    .eq('id', imageId)
+
+  if (error) {
     throw new Error('Impossible de supprimer cette photo.')
   }
 }
 
+// ─── Contact ────────────────────────────────────────────────
+
 export async function sendContactMessage(contactData) {
-  const response = await fetch(`${API_BASE_URL}/contact/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(contactData),
+  const { data, error } = await supabase.functions.invoke('contact', {
+    body: contactData,
   })
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
+  if (error) {
     throw new Error(
-      data.non_field_errors?.[0] ??
-        data.detail ??
-        'Impossible d’envoyer la demande pour le moment.',
+      error.message ?? "Impossible d'envoyer la demande pour le moment.",
     )
   }
 
   return data
 }
+
+// ─── Appointments ───────────────────────────────────────────
 
 export async function fetchAppointmentAvailability() {
-  const response = await fetch(`${API_BASE_URL}/appointments/availability/`)
+  const { data, error } = await supabase.functions.invoke('appointment-availability')
 
-  if (!response.ok) {
-    throw new Error('Impossible de récupérer les rendez-vous.')
-  }
-
-  return response.json()
-}
-
-export async function createAppointmentSlot(token, slotData) {
-  const response = await fetch(`${API_BASE_URL}/appointment-slots/`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(slotData),
-  })
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(
-      data.non_field_errors?.[0] ??
-        data.detail ??
-        'Impossible d’ouvrir ce créneau.',
-    )
+  if (error) {
+    throw new Error('Impossible de recuperer les rendez-vous.')
   }
 
   return data
 }
 
-export async function deleteAppointmentSlot(token, slotId) {
-  const response = await fetch(`${API_BASE_URL}/appointment-slots/${slotId}/`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+export async function createAppointmentSlot(slotData) {
+  const { data, error } = await supabase
+    .from('appointment_slots')
+    .insert(slotData)
+    .select()
+    .single()
 
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.detail ?? 'Impossible de fermer ce créneau.')
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('Ce creneau est deja ouvert.')
+    }
+    throw new Error("Impossible d'ouvrir ce creneau.")
+  }
+
+  return data
+}
+
+export async function deleteAppointmentSlot(slotId) {
+  const { error } = await supabase
+    .from('appointment_slots')
+    .delete()
+    .eq('id', slotId)
+
+  if (error) {
+    throw new Error('Impossible de fermer ce creneau.')
   }
 }
 
 export async function requestAppointment(appointmentData) {
-  const response = await fetch(`${API_BASE_URL}/appointments/request/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(appointmentData),
+  const { data, error } = await supabase.functions.invoke('appointment-request', {
+    body: appointmentData,
   })
 
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
+  if (error) {
     throw new Error(
-      data.non_field_errors?.[0] ??
-        data.detail ??
-        'Impossible d’envoyer la demande de rendez-vous.',
+      error.message ?? "Impossible d'envoyer la demande de rendez-vous.",
     )
   }
 
   return data
 }
 
-export async function fetchAdminAppointments(token) {
-  const response = await fetch(`${API_BASE_URL}/appointments/`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+export async function fetchAdminAppointments() {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .order('scheduled_at')
 
-  if (!response.ok) {
-    throw new Error('Impossible de récupérer les rendez-vous.')
-  }
-
-  return response.json()
-}
-
-export async function validateAppointment(token, appointmentId, appointmentData = {}) {
-  const response = await fetch(
-    `${API_BASE_URL}/appointments/${appointmentId}/validate/`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(appointmentData),
-    },
-  )
-
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(data.detail ?? 'Impossible d’accepter ce rendez-vous.')
+  if (error) {
+    throw new Error('Impossible de recuperer les rendez-vous.')
   }
 
   return data
 }
 
-export async function cancelAppointment(token, appointmentId) {
-  const response = await fetch(
-    `${API_BASE_URL}/appointments/${appointmentId}/cancel/`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  )
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.detail ?? 'Impossible de refuser ce rendez-vous.')
-  }
-
-  return null
-}
-
-export async function updateAppointment(token, appointmentId, appointmentData) {
-  const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(appointmentData),
+export async function validateAppointment(appointmentId, appointmentData = {}) {
+  const { data, error } = await supabase.functions.invoke('appointment-validate', {
+    body: { id: appointmentId, ...appointmentData },
   })
 
-  const data = await response.json().catch(() => ({}))
+  if (error) {
+    throw new Error(error.message ?? "Impossible d'accepter ce rendez-vous.")
+  }
 
-  if (!response.ok) {
+  return data
+}
+
+export async function cancelAppointment(appointmentId) {
+  const { data, error } = await supabase.functions.invoke('appointment-cancel', {
+    body: { id: appointmentId },
+  })
+
+  if (error) {
+    throw new Error(error.message ?? 'Impossible de refuser ce rendez-vous.')
+  }
+
+  return data
+}
+
+export async function updateAppointment(appointmentId, appointmentData) {
+  const { data, error } = await supabase.functions.invoke('appointment-update', {
+    body: { id: appointmentId, ...appointmentData },
+  })
+
+  if (error) {
     throw new Error(
-      data.non_field_errors?.[0] ??
-        data.detail ??
-        'Impossible de modifier ce rendez-vous.',
+      error.message ?? 'Impossible de modifier ce rendez-vous.',
     )
   }
 

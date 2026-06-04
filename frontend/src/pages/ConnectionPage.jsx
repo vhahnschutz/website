@@ -1,36 +1,25 @@
 import { useEffect, useState } from 'react'
-import {
-  clearAuth,
-  getCurrentAdmin,
-  getStoredAuth,
-  loginAdmin,
-  storeAuth,
-} from '../lib/api'
+import { loginAdmin } from '../lib/api'
+import { supabase } from '../lib/supabase'
 
 const initialFormData = {
-  username: '',
+  email: '',
   password: '',
 }
 
 function ConnectionPage({ onLoginSuccess }) {
-  const storedAuth = getStoredAuth()
   const [formData, setFormData] = useState(initialFormData)
-  const [isCheckingSession, setIsCheckingSession] = useState(
-    () => Boolean(storedAuth?.token),
-  )
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!storedAuth?.token) {
-      return
-    }
-
-    getCurrentAdmin(storedAuth.token)
-      .then(() => onLoginSuccess())
-      .catch(() => clearAuth())
-      .finally(() => setIsCheckingSession(false))
-  }, [onLoginSuccess, storedAuth?.token])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        onLoginSuccess()
+      }
+    }).finally(() => setIsCheckingSession(false))
+  }, [onLoginSuccess])
 
   const updateField = (event) => {
     const { name, value } = event.target
@@ -46,8 +35,7 @@ function ConnectionPage({ onLoginSuccess }) {
     setIsSubmitting(true)
 
     try {
-      const authData = await loginAdmin(formData)
-      storeAuth(authData)
+      await loginAdmin(formData)
       setFormData(initialFormData)
       onLoginSuccess()
     } catch (loginError) {
@@ -62,7 +50,7 @@ function ConnectionPage({ onLoginSuccess }) {
       <main className="admin-page">
         <section className="admin-login-panel" aria-live="polite">
           <p className="eyebrow">Connexion</p>
-          <h1>Vérification de la session.</h1>
+          <h1>Verification de la session.</h1>
         </section>
       </main>
     )
@@ -74,16 +62,16 @@ function ConnectionPage({ onLoginSuccess }) {
         <p className="eyebrow">Connexion</p>
         <h1>Connexion</h1>
         <p className="admin-login-copy">
-          Connectez-vous avec vos identifiants pour accéder à votre espace.
+          Connectez-vous avec vos identifiants pour acceder a votre espace.
         </p>
 
         <form className="admin-login-form" onSubmit={submitLogin}>
           <label>
-            <span>Identifiant</span>
+            <span>Email</span>
             <input
-              type="text"
-              name="username"
-              value={formData.username}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={updateField}
               autoComplete="username"
               required
