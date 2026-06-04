@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import {
   cancelAppointment,
   clearAuth,
@@ -7,7 +8,6 @@ import {
   fetchAdminAppointments,
   fetchAppointmentAvailability,
   getCurrentAdmin,
-  getStoredAuth,
   requestAppointment,
   updateAppointment,
   validateAppointment,
@@ -34,6 +34,33 @@ function toDateTimeLocalValue(date) {
   return offsetDate.toISOString().slice(0, 16)
 }
 
+function datetimeLocalToISO(datetimeLocalStr) {
+  const date = new Date(datetimeLocalStr)
+  const offset = -date.getTimezoneOffset()
+  const sign = offset >= 0 ? '+' : '-'
+  const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0')
+  return date.getFullYear()
+    + '-' + pad(date.getMonth() + 1)
+    + '-' + pad(date.getDate())
+    + 'T' + pad(date.getHours())
+    + ':' + pad(date.getMinutes())
+    + ':' + pad(date.getSeconds())
+    + sign + pad(offset / 60) + ':' + pad(offset % 60)
+}
+
+function toISOLocal(date) {
+  const offset = -date.getTimezoneOffset()
+  const sign = offset >= 0 ? '+' : '-'
+  const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0')
+  return date.getFullYear()
+    + '-' + pad(date.getMonth() + 1)
+    + '-' + pad(date.getDate())
+    + 'T' + pad(date.getHours())
+    + ':' + pad(date.getMinutes())
+    + ':' + pad(date.getSeconds())
+    + sign + pad(offset / 60) + ':' + pad(offset % 60)
+}
+
 function getMonday(date) {
   const start = new Date(date)
   const day = start.getDay() || 7
@@ -58,11 +85,11 @@ function formatLongDate(value) {
 
 function getStatusLabel(status) {
   if (status === 'confirmed') {
-    return 'Confirmé'
+    return 'Confirme'
   }
 
   if (status === 'cancelled') {
-    return 'Annulé'
+    return 'Annule'
   }
 
   return 'En attente'
@@ -98,12 +125,12 @@ function buildWeekSlots(weekStart) {
   })
 }
 
-function AppointmentPage() {
+function AppointmentPage({ isAuthenticated = false }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const [availability, setAvailability] = useState([])
   const [appointmentSlots, setAppointmentSlots] = useState([])
   const [adminAppointments, setAdminAppointments] = useState([])
-  const [adminToken, setAdminToken] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [formData, setFormData] = useState(initialAppointmentForm)
@@ -113,16 +140,10 @@ function AppointmentPage() {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const hcaptchaRef = useRef(null)
 
   const weekSlots = useMemo(() => buildWeekSlots(weekStart), [weekStart])
-
-  const appointmentsByTime = useMemo(() => {
-    const source = adminToken ? adminAppointments : availability
-    return source.reduce((appointmentsMap, appointment) => {
-      appointmentsMap.set(new Date(appointment.scheduled_at).getTime(), appointment)
-      return appointmentsMap
-    }, new Map())
-  }, [adminAppointments, adminToken, availability])
 
   const appointmentSlotsByTime = useMemo(() => appointmentSlots.reduce((slotsMap, slot) => {
     slotsMap.set(new Date(slot.starts_at).getTime(), slot)
@@ -130,7 +151,7 @@ function AppointmentPage() {
   }, new Map()), [appointmentSlots])
 
   const findAppointmentForSlot = (slotDate) => {
-    const source = adminToken ? adminAppointments : availability
+    const source = isAdmin ? adminAppointments : availability
     return source.find((appointment) => {
       const startsAt = new Date(appointment.scheduled_at)
       const endsAt = getEndTime(startsAt, appointment.duration_minutes)
@@ -143,21 +164,28 @@ function AppointmentPage() {
     setError('')
 
     try {
-      const storedAuth = getStoredAuth()
       const availabilityData = await fetchAppointmentAvailability()
       setAvailability(availabilityData.appointments ?? availabilityData)
       setAppointmentSlots(availabilityData.slots ?? [])
 
-      if (storedAuth?.token) {
+      if (isAuthenticated) {
         try {
-          await getCurrentAdmin(storedAuth.token)
-          setAdminToken(storedAuth.token)
-          setAdminAppointments(await fetchAdminAppointments(storedAuth.token))
+          const user = await getCurrentAdmin()
+          if (user?.user_metadata?.is_admin === true) {
+            setIsAdmin(true)
+            setAdminAppointments(await fetchAdminAppointments())
+          } else {
+            setIsAdmin(false)
+            setAdminAppointments([])
+          }
         } catch {
           clearAuth()
-          setAdminToken('')
+          setIsAdmin(false)
           setAdminAppointments([])
         }
+      } else {
+        setIsAdmin(false)
+        setAdminAppointments([])
       }
     } catch (loadError) {
       setError(loadError.message)
@@ -178,7 +206,7 @@ function AppointmentPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [isAuthenticated])
 
   const updateField = (event) => {
     const { checked, name, type, value } = event.target
@@ -195,7 +223,7 @@ function AppointmentPage() {
     const slot = appointmentSlotsByTime.get(slotDate.getTime())
 
     if (appointment) {
-      if (!adminToken) {
+      if (!isAdmin) {
         return
       }
 
@@ -216,7 +244,7 @@ function AppointmentPage() {
       return
     }
 
-    if (adminToken) {
+    if (isAdmin) {
       toggleAvailabilitySlot(slotDate, slot)
       return
     }
@@ -244,10 +272,10 @@ function AppointmentPage() {
 
     try {
       if (slot) {
-        await deleteAppointmentSlot(adminToken, slot.id)
+        await deleteAppointmentSlot(slot.id)
       } else {
-        await createAppointmentSlot(adminToken, {
-          starts_at: toDateTimeLocalValue(slotDate),
+        await createAppointmentSlot({
+          starts_at: toISOLocal(slotDate),
           duration_minutes: 60,
         })
       }
@@ -271,6 +299,8 @@ function AppointmentPage() {
     setFormData(initialAppointmentForm)
     setStatus('')
     setError('')
+    setCaptchaToken('')
+    hcaptchaRef.current?.resetCaptcha()
   }
 
   const submitAppointment = async (event) => {
@@ -280,12 +310,18 @@ function AppointmentPage() {
     setIsSubmitting(true)
 
     try {
-      await requestAppointment(formData)
-      setStatus('Votre demande a bien été envoyée. Elle sera confirmée après validation.')
+      await requestAppointment({
+        ...formData,
+        scheduled_at: datetimeLocalToISO(formData.scheduled_at),
+        captchaToken,
+      })
+      setStatus('Votre demande a bien ete envoyee. Elle sera confirmee apres validation.')
       await loadAppointments()
       setTimeout(closeModal, 900)
     } catch (submitError) {
       setError(submitError.message)
+      setCaptchaToken('')
+      hcaptchaRef.current?.resetCaptcha()
     } finally {
       setIsSubmitting(false)
     }
@@ -297,12 +333,12 @@ function AppointmentPage() {
     setIsUpdating(true)
 
     try {
-      await updateAppointment(adminToken, selectedAppointment.id, {
+      await updateAppointment(selectedAppointment.id, {
         title: formData.title,
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
         customer_phone: formData.customer_phone,
-        scheduled_at: formData.scheduled_at,
+        scheduled_at: datetimeLocalToISO(formData.scheduled_at),
         duration_minutes: Number(formData.duration_minutes),
         notes: formData.notes,
       })
@@ -321,17 +357,17 @@ function AppointmentPage() {
 
     try {
       if (action === 'validate') {
-        await validateAppointment(adminToken, selectedAppointment.id, {
+        await validateAppointment(selectedAppointment.id, {
           title: formData.title,
           customer_name: formData.customer_name,
           customer_email: formData.customer_email,
           customer_phone: formData.customer_phone,
-          scheduled_at: formData.scheduled_at,
+          scheduled_at: datetimeLocalToISO(formData.scheduled_at),
           duration_minutes: Number(formData.duration_minutes),
           notes: formData.notes,
         })
       } else {
-        await cancelAppointment(adminToken, selectedAppointment.id)
+        await cancelAppointment(selectedAppointment.id)
       }
 
       await loadAppointments()
@@ -388,10 +424,10 @@ function AppointmentPage() {
     const slotLabel = isBusy
       ? getStatusLabel(appointment.status)
       : isOpen
-        ? adminToken
+        ? isAdmin
           ? 'Fermer'
           : 'Disponible'
-        : adminToken
+        : isAdmin
           ? 'Ouvrir'
           : 'Indisponible'
 
@@ -405,7 +441,7 @@ function AppointmentPage() {
               ? 'planner-slot is-open'
               : 'planner-slot is-closed'
         }
-        disabled={isUpdating || isPast || (!adminToken && (!isOpen || isBusy))}
+        disabled={isUpdating || isPast || (!isAdmin && (!isOpen || isBusy))}
         key={`${variant}-${dayLabel}-${hour}`}
         onClick={() => openSlot(slot)}
       >
@@ -419,9 +455,9 @@ function AppointmentPage() {
     <main className="appointment-page">
       <section className="page-intro appointment-page-intro">
         <p className="eyebrow">Rendez-vous</p>
-        <h1>Choisir un créneau d’intervention.</h1>
+        <h1>Choisir un creneau d'intervention.</h1>
         <p>
-          Les rendez-vous sont possibles uniquement sur les créneaux ouverts
+          Les rendez-vous sont possibles uniquement sur les creneaux ouverts
           par l'atelier.
         </p>
       </section>
@@ -429,7 +465,7 @@ function AppointmentPage() {
       <section className="page-section appointment-planner-section">
         <div className="planner-toolbar">
           <button type="button" className="secondary-button" onClick={goToPreviousWeek}>
-            Semaine précédente
+            Semaine precedente
           </button>
           <strong>
             Semaine du {formatDate(weekStart)} au{' '}
@@ -514,7 +550,7 @@ function AppointmentPage() {
             </button>
 
             <p className="eyebrow">
-              {selectedAppointment ? getStatusLabel(selectedAppointment.status) : 'Créneau libre'}
+              {selectedAppointment ? getStatusLabel(selectedAppointment.status) : 'Creneau libre'}
             </p>
             <h2 id="appointment-modal-title">{modalTitle}</h2>
             <p className="appointment-modal-date">
@@ -539,7 +575,7 @@ function AppointmentPage() {
               </label>
 
               <label>
-                <span>Téléphone</span>
+                <span>Telephone</span>
                 <input
                   type="tel"
                   name="customer_phone"
@@ -563,7 +599,7 @@ function AppointmentPage() {
               </label>
 
               <label>
-                <span>Créneau</span>
+                <span>Creneau</span>
                 <input
                   type="datetime-local"
                   name="scheduled_at"
@@ -576,7 +612,7 @@ function AppointmentPage() {
 
               {selectedAppointment && (
                 <label>
-                  <span>Durée (minutes)</span>
+                  <span>Duree (minutes)</span>
                   <input
                     type="number"
                     name="duration_minutes"
@@ -633,19 +669,18 @@ function AppointmentPage() {
                         onChange={updateField}
                         required
                       />
-                      <span>J'accepte la politique de confidentialité.</span>
+                      <span>J'accepte la politique de confidentialite.</span>
                     </label>
 
-                    <label className="checkbox-field human-check">
-                      <input
-                        type="checkbox"
-                        name="humanConfirmed"
-                        checked={formData.humanConfirmed}
-                        onChange={updateField}
-                        required
+                    <div className="hcaptcha-wrapper">
+                      <HCaptcha
+                        ref={hcaptchaRef}
+                        sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
+                        onVerify={(token) => setCaptchaToken(token)}
+                        onExpire={() => setCaptchaToken('')}
+                        onError={() => setCaptchaToken('')}
                       />
-                      <span>Je confirme que je ne suis pas un robot.</span>
-                    </label>
+                    </div>
                   </div>
                 </>
               )}
@@ -665,7 +700,7 @@ function AppointmentPage() {
               <button
                 type="submit"
                 className="cta-button appointment-wide"
-                disabled={isSubmitting || isUpdating}
+                disabled={isSubmitting || isUpdating || (!selectedAppointment && !captchaToken)}
               >
                 {selectedAppointment ? 'Enregistrer' : 'Envoyer la demande'}
               </button>
@@ -719,8 +754,8 @@ function AppointmentPage() {
               Annuler ce rendez-vous ?
             </h2>
             <p id="cancel-confirmation-description">
-              Cette action supprimera le rendez-vous du planning et libérera
-              définitivement le créneau du {formatLongDate(formData.scheduled_at)}.
+              Cette action supprimera le rendez-vous du planning et libera
+              definitivement le creneau du {formatLongDate(formData.scheduled_at)}.
             </p>
 
             <div className="confirmation-actions">

@@ -5,7 +5,6 @@ import {
   deleteSale,
   fetchSales,
   getCurrentAdmin,
-  getStoredAuth,
   updateSale,
 } from '../lib/api'
 
@@ -24,10 +23,10 @@ function formatPrice(price) {
   }).format(Number(price))
 }
 
-function RentalPage() {
+function RentalPage({ isAuthenticated = false }) {
   const [search, setSearch] = useState('')
   const [sales, setSales] = useState([])
-  const [adminToken, setAdminToken] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,18 +36,17 @@ function RentalPage() {
   const [saleForm, setSaleForm] = useState(initialSaleForm)
 
   const checkAdminSession = async () => {
-    const storedAuth = getStoredAuth()
-
-    if (!storedAuth?.token) {
+    if (!isAuthenticated) {
+      setIsAdmin(false)
       return
     }
 
     try {
-      await getCurrentAdmin(storedAuth.token)
-      setAdminToken(storedAuth.token)
+      const user = await getCurrentAdmin()
+      setIsAdmin(user?.user_metadata?.is_admin === true)
     } catch {
       clearAuth()
-      setAdminToken('')
+      setIsAdmin(false)
     }
   }
 
@@ -71,7 +69,7 @@ function RentalPage() {
     }
 
     loadPageData()
-  }, [])
+  }, [isAuthenticated])
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
@@ -139,8 +137,8 @@ function RentalPage() {
 
     try {
       const savedSale = editingSale
-        ? await updateSale(adminToken, editingSale.id, saleForm)
-        : await createSale(adminToken, saleForm)
+        ? await updateSale(editingSale.id, saleForm)
+        : await createSale(saleForm)
 
       setSales((currentSales) =>
         editingSale
@@ -167,7 +165,7 @@ function RentalPage() {
     }
 
     try {
-      await deleteSale(adminToken, sale.id)
+      await deleteSale(sale.id)
       setSales((currentSales) =>
         currentSales.filter((currentSale) => currentSale.id !== sale.id),
       )
@@ -180,12 +178,12 @@ function RentalPage() {
     <section id="pieces-accessoires" className="page-section rental-page">
       <div className="section-heading-row">
         <div>
-          <p className="eyebrow">Pièces détachées et accessoires</p>
-          <h2>Distributeur de pièces détachées et accessoires en motoculture.</h2>
+          <p className="eyebrow">Pieces detachees et accessoires</p>
+          <h2>Distributeur de pieces detachees et accessoires en motoculture.</h2>
         </div>
 
         <div className="rental-actions">
-          {adminToken && (
+          {isAdmin && (
             <button
               type="button"
               className="cta-button"
@@ -201,7 +199,7 @@ function RentalPage() {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Lame, bougie, chaîne..."
+              placeholder="Lame, bougie, chaine..."
             />
           </label>
         </div>
@@ -213,7 +211,7 @@ function RentalPage() {
         </p>
       )}
 
-      {isLoading && <p className="empty-results">Chargement des pièces...</p>}
+      {isLoading && <p className="empty-results">Chargement des pieces...</p>}
 
       {!isLoading && (
         <div className="rental-grid">
@@ -226,7 +224,7 @@ function RentalPage() {
                 <p>{item.description}</p>
                 <strong>{formatPrice(item.price)}</strong>
 
-                {adminToken && (
+                {isAdmin && (
                   <div className="rental-admin-actions">
                     <button
                       type="button"
@@ -252,7 +250,7 @@ function RentalPage() {
 
       {!isLoading && filteredItems.length === 0 && (
         <p className="empty-results">
-          Aucune pièce ne correspond à cette recherche.
+          Aucune piece ne correspond a cette recherche.
         </p>
       )}
 
@@ -283,7 +281,7 @@ function RentalPage() {
 
             <p className="eyebrow">Gestion</p>
             <h2 id="sale-editor-title">
-              {editingSale ? 'Modifier une pièce' : 'Ajouter une pièce'}
+              {editingSale ? 'Modifier une piece' : 'Ajouter une piece'}
             </h2>
 
             <form className="sale-editor-form" onSubmit={saveSale}>

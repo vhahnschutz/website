@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import rcServicesLogo from '../assets/rc-services-logo.jpg'
 
 const openingHours = [
   ['Lundi', '8h à 19h'],
@@ -105,11 +104,7 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
             aria-label="Retour à l'accueil"
             onClick={(event) => goToPage(event, '/')}
           >
-            <img className="brand-logo" src={rcServicesLogo} alt="" />
-            <span>
-              <strong>RC services</strong>
-              <small>Mécanicien espaces verts</small>
-            </span>
+            <img className="brand-logo" src="/logo.png" alt="RC services" />
           </a>
 
           <button

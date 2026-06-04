@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { sendContactMessage } from '../lib/api'
 
 const contactEmail = 'Rcservices68320@gmail.com'
@@ -19,6 +20,8 @@ function ContactPage({ onNavigate }) {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const hcaptchaRef = useRef(null)
 
   const updateField = (event) => {
     const { checked, name, type, value } = event.target
@@ -35,11 +38,15 @@ function ContactPage({ onNavigate }) {
     setIsSubmitting(true)
 
     try {
-      await sendContactMessage(formData)
+      await sendContactMessage({ ...formData, captchaToken })
       setStatus('Votre demande a bien été envoyée.')
       setFormData(initialFormData)
+      setCaptchaToken('')
+      hcaptchaRef.current?.resetCaptcha()
     } catch (sendError) {
       setError(sendError.message)
+      setCaptchaToken('')
+      hcaptchaRef.current?.resetCaptcha()
     } finally {
       setIsSubmitting(false)
     }
@@ -153,16 +160,15 @@ function ContactPage({ onNavigate }) {
               </span>
             </label>
 
-            <label className="checkbox-field human-check">
-              <input
-                type="checkbox"
-                name="humanConfirmed"
-                checked={formData.humanConfirmed}
-                onChange={updateField}
-                required
+            <div className="hcaptcha-wrapper">
+              <HCaptcha
+                ref={hcaptchaRef}
+                sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken('')}
+                onError={() => setCaptchaToken('')}
               />
-              <span>Je confirme que je ne suis pas un robot</span>
-            </label>
+            </div>
           </div>
 
           {status && (
@@ -180,7 +186,7 @@ function ContactPage({ onNavigate }) {
           <button
             type="submit"
             className="cta-button contact-submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !captchaToken}
           >
             {isSubmitting ? 'Envoi...' : 'Envoyer la demande'}
           </button>

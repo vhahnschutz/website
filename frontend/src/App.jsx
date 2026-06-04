@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { clearAuth, getStoredAuth } from './lib/api'
+import { clearAuth } from './lib/api'
+import { supabase } from './lib/supabase'
 import CookieConsent from './components/CookieConsent'
 import Footer from './components/Footer'
 import ConnectionPage from './pages/ConnectionPage'
@@ -45,14 +46,26 @@ function scrollToTarget(target) {
 
 function App() {
   const [route, setRoute] = useState(getCurrentRoute)
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => Boolean(getStoredAuth()?.token),
-  )
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isGalleryReady, setIsGalleryReady] = useState(false)
   const [isCookiePanelOpen, setIsCookiePanelOpen] = useState(false)
   const [pendingScrollHash, setPendingScrollHash] = useState(
     () => window.location.hash || null,
   )
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(Boolean(session))
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session))
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const onPopState = () => {
@@ -114,7 +127,8 @@ function App() {
     navigate('/')
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     clearAuth()
     setIsAuthenticated(false)
     navigate('/')
@@ -141,9 +155,9 @@ function App() {
           <ContactPage onNavigate={navigate} />
         </>
       )}
-      {route === 'appointments' && <AppointmentPage />}
+      {route === 'appointments' && <AppointmentPage isAuthenticated={isAuthenticated} />}
       {route === 'repair' && <RepairPage onNavigate={navigate} />}
-      {route === 'rental' && <RentalPage />}
+      {route === 'rental' && <RentalPage isAuthenticated={isAuthenticated} />}
       {route === 'legal' && <LegalPage page="legal" />}
       {route === 'privacy' && <LegalPage page="privacy" />}
       {route === 'cookies' && (
