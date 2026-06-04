@@ -33,6 +33,33 @@ function toDateTimeLocalValue(date) {
   return offsetDate.toISOString().slice(0, 16)
 }
 
+function datetimeLocalToISO(datetimeLocalStr) {
+  const date = new Date(datetimeLocalStr)
+  const offset = -date.getTimezoneOffset()
+  const sign = offset >= 0 ? '+' : '-'
+  const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0')
+  return date.getFullYear()
+    + '-' + pad(date.getMonth() + 1)
+    + '-' + pad(date.getDate())
+    + 'T' + pad(date.getHours())
+    + ':' + pad(date.getMinutes())
+    + ':' + pad(date.getSeconds())
+    + sign + pad(offset / 60) + ':' + pad(offset % 60)
+}
+
+function toISOLocal(date) {
+  const offset = -date.getTimezoneOffset()
+  const sign = offset >= 0 ? '+' : '-'
+  const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0')
+  return date.getFullYear()
+    + '-' + pad(date.getMonth() + 1)
+    + '-' + pad(date.getDate())
+    + 'T' + pad(date.getHours())
+    + ':' + pad(date.getMinutes())
+    + ':' + pad(date.getSeconds())
+    + sign + pad(offset / 60) + ':' + pad(offset % 60)
+}
+
 function getMonday(date) {
   const start = new Date(date)
   const day = start.getDay() || 7
@@ -245,7 +272,7 @@ function AppointmentPage({ isAuthenticated = false }) {
         await deleteAppointmentSlot(slot.id)
       } else {
         await createAppointmentSlot({
-          starts_at: toDateTimeLocalValue(slotDate),
+          starts_at: toISOLocal(slotDate),
           duration_minutes: 60,
         })
       }
@@ -278,7 +305,10 @@ function AppointmentPage({ isAuthenticated = false }) {
     setIsSubmitting(true)
 
     try {
-      await requestAppointment(formData)
+      await requestAppointment({
+        ...formData,
+        scheduled_at: datetimeLocalToISO(formData.scheduled_at),
+      })
       setStatus('Votre demande a bien ete envoyee. Elle sera confirmee apres validation.')
       await loadAppointments()
       setTimeout(closeModal, 900)
@@ -300,7 +330,7 @@ function AppointmentPage({ isAuthenticated = false }) {
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
         customer_phone: formData.customer_phone,
-        scheduled_at: formData.scheduled_at,
+        scheduled_at: datetimeLocalToISO(formData.scheduled_at),
         duration_minutes: Number(formData.duration_minutes),
         notes: formData.notes,
       })
@@ -324,7 +354,7 @@ function AppointmentPage({ isAuthenticated = false }) {
           customer_name: formData.customer_name,
           customer_email: formData.customer_email,
           customer_phone: formData.customer_phone,
-          scheduled_at: formData.scheduled_at,
+          scheduled_at: datetimeLocalToISO(formData.scheduled_at),
           duration_minutes: Number(formData.duration_minutes),
           notes: formData.notes,
         })

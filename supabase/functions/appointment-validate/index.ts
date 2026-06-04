@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
         `Bonjour ${updated.customer_name || ""}`.trim() + ",",
         "",
         "Votre demande de rendez-vous a ete acceptee.",
-        `Creneau : ${new Date(updated.scheduled_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} a ${new Date(updated.scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
+        `Creneau : ${new Date(updated.scheduled_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Paris" })} a ${new Date(updated.scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })}`,
         `Duree : ${updated.duration_minutes / 60}h`,
         `Objet : ${updated.title}`,
         "",

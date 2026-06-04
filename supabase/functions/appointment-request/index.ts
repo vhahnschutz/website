@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       `Nom : ${customer_name}`,
       `Telephone : ${customer_phone}`,
       `Email : ${customer_email}`,
-      `Creneau : ${new Date(scheduled_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} a ${new Date(scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
+      `Creneau : ${new Date(scheduled_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Paris" })} a ${new Date(scheduled_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })}`,
       `Objet : ${title}`,
       "",
       "Message :",
