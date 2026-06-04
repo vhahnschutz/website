@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, phone, email, service, message, privacyAccepted, humanConfirmed, website } =
+    const { name, phone, email, service, message, privacyAccepted, website, captchaToken } =
       await req.json();
 
     // Honeypot
@@ -35,11 +35,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!humanConfirmed) {
+    // hCaptcha verification
+    if (!captchaToken) {
       return new Response(
-        JSON.stringify({
-          error: "La confirmation anti-spam est obligatoire.",
-        }),
+        JSON.stringify({ error: "La verification anti-spam est obligatoire." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const hCaptchaSecret = Deno.env.get("HCAPTCHA_SECRET_KEY");
+    if (!hCaptchaSecret) {
+      console.error("HCAPTCHA_SECRET_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Erreur de configuration du serveur." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const verifyRes = await fetch("https://api.hcaptcha.com/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `response=${encodeURIComponent(captchaToken)}&secret=${encodeURIComponent(hCaptchaSecret)}`,
+    });
+    const verifyData = await verifyRes.json();
+
+    if (!verifyData.success) {
+      return new Response(
+        JSON.stringify({ error: "La verification anti-spam a echoue. Veuillez reessayer." }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

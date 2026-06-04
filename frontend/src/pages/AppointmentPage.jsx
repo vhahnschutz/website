@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import {
   cancelAppointment,
   clearAuth,
@@ -139,6 +140,8 @@ function AppointmentPage({ isAuthenticated = false }) {
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const hcaptchaRef = useRef(null)
 
   const weekSlots = useMemo(() => buildWeekSlots(weekStart), [weekStart])
 
@@ -296,6 +299,8 @@ function AppointmentPage({ isAuthenticated = false }) {
     setFormData(initialAppointmentForm)
     setStatus('')
     setError('')
+    setCaptchaToken('')
+    hcaptchaRef.current?.resetCaptcha()
   }
 
   const submitAppointment = async (event) => {
@@ -308,12 +313,15 @@ function AppointmentPage({ isAuthenticated = false }) {
       await requestAppointment({
         ...formData,
         scheduled_at: datetimeLocalToISO(formData.scheduled_at),
+        captchaToken,
       })
       setStatus('Votre demande a bien ete envoyee. Elle sera confirmee apres validation.')
       await loadAppointments()
       setTimeout(closeModal, 900)
     } catch (submitError) {
       setError(submitError.message)
+      setCaptchaToken('')
+      hcaptchaRef.current?.resetCaptcha()
     } finally {
       setIsSubmitting(false)
     }
@@ -664,16 +672,15 @@ function AppointmentPage({ isAuthenticated = false }) {
                       <span>J'accepte la politique de confidentialite.</span>
                     </label>
 
-                    <label className="checkbox-field human-check">
-                      <input
-                        type="checkbox"
-                        name="humanConfirmed"
-                        checked={formData.humanConfirmed}
-                        onChange={updateField}
-                        required
+                    <div className="hcaptcha-wrapper">
+                      <HCaptcha
+                        ref={hcaptchaRef}
+                        sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
+                        onVerify={(token) => setCaptchaToken(token)}
+                        onExpire={() => setCaptchaToken('')}
+                        onError={() => setCaptchaToken('')}
                       />
-                      <span>Je confirme que je ne suis pas un robot.</span>
-                    </label>
+                    </div>
                   </div>
                 </>
               )}
@@ -693,7 +700,7 @@ function AppointmentPage({ isAuthenticated = false }) {
               <button
                 type="submit"
                 className="cta-button appointment-wide"
-                disabled={isSubmitting || isUpdating}
+                disabled={isSubmitting || isUpdating || (!selectedAppointment && !captchaToken)}
               >
                 {selectedAppointment ? 'Enregistrer' : 'Envoyer la demande'}
               </button>

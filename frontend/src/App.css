@@ -156,8 +156,8 @@
 }
 
 .brand-logo {
-  width: 76px;
-  height: 54px;
+  width: 200px;
+  height: auto;
   flex: 0 0 auto;
   border-radius: 8px;
   object-fit: cover;
@@ -1285,6 +1285,19 @@
   background: rgba(182, 216, 54, 0.12);
 }
 
+.hcaptcha-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border: 1px solid rgba(50, 107, 53, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.hcaptcha-wrapper > div {
+  transform-origin: center;
+}
+
 .contact-submit {
   width: fit-content;
   min-width: 220px;
@@ -2233,8 +2246,8 @@
   }
 
   .brand-logo {
-    width: 54px;
-    height: 38px;
+    width: 150px;
+    height: auto;
   }
 
   .brand strong {
