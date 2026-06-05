@@ -1,13 +1,3 @@
-const openingHours = [
-  ['Lundi', '8h - 19h'],
-  ['Mardi', '8h - 19h'],
-  ['Mercredi', '8h - 19h'],
-  ['Jeudi', '8h - 19h'],
-  ['Vendredi', '8h - 19h'],
-  ['Samedi', 'Sur rendez-vous'],
-  ['Dimanche', 'Fermé'],
-]
-
 function Footer({ onNavigate, onOpenCookieSettings }) {
   const goToPage = (event, href) => {
     event.preventDefault()
@@ -63,14 +53,9 @@ function Footer({ onNavigate, onOpenCookieSettings }) {
 
         <div>
           <p className="eyebrow" style={{ color: 'var(--green-bright)', marginBottom: '10px' }}>Horaires</p>
-          <dl className="footer-hours">
-            {openingHours.map(([day, hours]) => (
-              <div className="footer-hours-row" key={day}>
-                <dt>{day}</dt>
-                <dd>{hours}</dd>
-              </div>
-            ))}
-          </dl>
+          <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.88rem' }}>
+            Nous vous accueillons sur rendez-vous du lundi au samedi durant les créneaux disponibles.
+          </p>
         </div>
 
         <nav className="footer-links" aria-label="Liens obligatoires">

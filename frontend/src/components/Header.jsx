@@ -1,15 +1,5 @@
 import { useEffect, useState } from 'react'
 
-const openingHours = [
-  ['Lundi', '8h à 19h'],
-  ['Mardi', '8h à 19h'],
-  ['Mercredi', '8h à 19h'],
-  ['Jeudi', '8h à 19h'],
-  ['Vendredi', '8h à 19h'],
-  ['Samedi', 'Sur rendez-vous'],
-  ['Dimanche', 'Fermé'],
-]
-
 const services = [
   ['Entretien et réparation', '/entretien-reparation'],
   ['Pièces et accessoires', '/pieces-accessoires'],
@@ -256,14 +246,9 @@ function Header({ isAuthenticated, onLogout, onNavigate, currentRoute }) {
             <p className="eyebrow">Horaires d'ouverture</p>
             <h2 id="hours-title">Nous vous accueillons sur rendez-vous.</h2>
 
-            <dl className="hours-list">
-              {openingHours.map(([day, hours]) => (
-                <div key={day}>
-                  <dt>{day}</dt>
-                  <dd>{hours}</dd>
-                </div>
-              ))}
-            </dl>
+            <p style={{ color: 'var(--muted)', marginTop: '12px' }}>
+              Du lundi au samedi durant les créneaux disponibles.
+            </p>
           </section>
         </div>
       )}
