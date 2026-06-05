@@ -170,6 +170,35 @@ function Header({ isAuthenticated, onLogout, onNavigate, currentRoute }) {
               Rendez-vous
             </a>
 
+            <button
+              type="button"
+              className="mobile-nav-only hours-button-mobile"
+              onClick={() => {
+                closeMenu()
+                setIsHoursOpen(true)
+              }}
+            >
+              Afficher les horaires
+            </button>
+
+            {isAuthenticated ? (
+              <button
+                type="button"
+                className="mobile-nav-only"
+                onClick={logout}
+              >
+                Se déconnecter
+              </button>
+            ) : (
+              <a
+                className="mobile-nav-only"
+                href="/connexion"
+                onClick={(event) => goToPage(event, '/connexion')}
+              >
+                Se connecter
+              </a>
+            )}
+
             <a
               className="social-icon-link"
               href="https://www.instagram.com/rcservice68/"

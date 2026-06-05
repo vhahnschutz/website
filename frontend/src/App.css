@@ -305,6 +305,20 @@
   border-radius: 1px;
 }
 
+.mobile-nav-only {
+  display: none;
+}
+
+.hours-button-mobile {
+  color: var(--green-dark);
+  background: var(--green-bright);
+  font-weight: 800;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+
 .social-submenu.is-open {
   visibility: visible;
   opacity: 1;
@@ -775,7 +789,7 @@
 
 .cta-button {
   display: inline-flex;
-  min-height: 46px;
+  min-height: var(--touch-min);
   align-items: center;
   justify-content: center;
   border: 0;
@@ -832,7 +846,7 @@
 }
 
 .rental-search input {
-  min-height: 48px;
+  min-height: var(--touch-min);
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -840,6 +854,7 @@
   color: var(--text);
   background: #fff;
   font: inherit;
+  font-size: 16px;
   outline: 0;
   transition:
     border-color 180ms ease,
@@ -981,6 +996,7 @@
   color: var(--text);
   background: rgba(255, 255, 255, 0.92);
   font: inherit;
+  font-size: 16px;
   outline: 0;
   transition:
     background-color 180ms ease,
@@ -989,7 +1005,7 @@
 }
 
 .sale-editor-form input {
-  min-height: 52px;
+  min-height: var(--touch-min);
 }
 
 .sale-editor-form textarea {
@@ -1063,6 +1079,7 @@
   color: var(--text);
   background: rgba(255, 255, 255, 0.92);
   font: inherit;
+  font-size: 16px;
   outline: 0;
   transition:
     background-color 180ms ease,
@@ -1071,7 +1088,7 @@
 }
 
 .appointment-form input {
-  min-height: 52px;
+  min-height: var(--touch-min);
 }
 
 .appointment-form textarea {
@@ -1264,6 +1281,12 @@
     border-color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
+}
+
+@media (max-width: 900px) {
+  .planner-slot {
+    min-height: var(--touch-min);
+  }
 }
 
 .planner-slot:hover,
@@ -1475,6 +1498,7 @@
   color: var(--text);
   background: rgba(255, 255, 255, 0.92);
   font: inherit;
+  font-size: 16px;
   outline: 0;
   transition:
     background-color 180ms ease,
@@ -1485,7 +1509,7 @@
 
 .contact-form input,
 .contact-form select {
-  min-height: 52px;
+  min-height: var(--touch-min);
 }
 
 .contact-form textarea {
@@ -1721,13 +1745,14 @@
 
 .admin-login-form input {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--touch-min);
   border: 1px solid rgba(50, 107, 53, 0.18);
   border-radius: 8px;
   padding: 13px 15px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.92);
   font: inherit;
+  font-size: 16px;
   outline: 0;
   transition:
     background-color 180ms ease,
@@ -1806,7 +1831,7 @@
 }
 
 .secondary-button {
-  min-height: 46px;
+  min-height: var(--touch-min);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px 18px;
@@ -2401,6 +2426,60 @@
   }
 }
 
+@media (max-width: 768px) {
+  .strength-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .repair-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-layout {
+    gap: 18px;
+  }
+
+  .appointment-layout {
+    gap: 18px;
+  }
+
+  .footer-inner {
+    gap: 24px;
+  }
+
+  .footer-hours {
+    gap: 4px;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+
+  .hero-description {
+    font-size: 1rem;
+  }
+
+  .page-section {
+    padding: 48px clamp(16px, 4vw, 40px);
+  }
+
+  .repair-page {
+    padding: 48px clamp(16px, 4vw, 40px);
+  }
+
+  .legal-page {
+    padding: 48px clamp(16px, 4vw, 40px);
+  }
+
+  .appointment-section {
+    padding: 48px clamp(16px, 4vw, 40px);
+  }
+
+  .section-divider {
+    margin: -1px 0;
+  }
+}
+
 @media (max-width: 900px) {
   .top-bar {
     grid-template-columns: 1fr;
@@ -2436,9 +2515,10 @@
 
   .menu-toggle {
     display: inline-flex;
-    min-height: 38px;
+    min-height: var(--touch-min);
     margin-top: 0;
-    padding: 8px 12px;
+    padding: 8px 14px;
+    font-size: 0.95rem;
   }
 
   .main-nav {
@@ -2459,7 +2539,7 @@
   }
 
   .main-nav.is-open {
-    max-height: 440px;
+    max-height: 500px;
     opacity: 1;
     transform: translateY(0);
   }
@@ -2467,9 +2547,10 @@
   .main-nav a,
   .main-nav button {
     justify-content: flex-start;
-    min-height: 38px;
+    min-height: var(--touch-min);
     width: 100%;
-    padding: 8px 10px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
   }
 
   .submenu {
@@ -2478,8 +2559,8 @@
     visibility: visible;
     opacity: 1;
     min-width: 0;
-    margin: 0 0 8px 10px;
-    padding: 4px;
+    margin: 0 0 8px 12px;
+    padding: 6px;
     transform: none;
     border: 0;
     border-left: 3px solid var(--green-bright);
@@ -2487,11 +2568,16 @@
     box-shadow: none;
   }
 
+  .submenu a {
+    min-height: var(--touch-min);
+    padding: 10px 12px;
+  }
+
   .main-nav .social-dropdown .social-submenu {
     visibility: hidden;
     max-height: 0;
-    margin: 0 0 0 10px;
-    padding: 0 4px;
+    margin: 0 0 0 12px;
+    padding: 0 6px;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
@@ -2499,16 +2585,16 @@
 
   .main-nav .social-dropdown .social-submenu.is-open {
     visibility: visible;
-    max-height: 140px;
-    margin: 0 0 8px 10px;
-    padding: 4px;
+    max-height: 160px;
+    margin: 0 0 8px 12px;
+    padding: 6px;
     opacity: 1;
     pointer-events: auto;
   }
 
   .social-icon-link {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   .footer-inner {
@@ -2527,8 +2613,28 @@
     grid-template-columns: 1fr;
   }
 
+  .service-card {
+    min-height: auto;
+  }
+
   .hero-section {
     padding: clamp(24px, 5vw, 40px) clamp(18px, 5vw, 56px);
+    min-height: auto;
+  }
+
+  .hero-content h1 {
+    margin-bottom: clamp(1.5rem, 5vh, 4vh);
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-actions .cta-button,
+  .hero-actions .secondary-button {
+    width: 100%;
+    text-align: center;
   }
 
   .gallery-heading {
@@ -2560,6 +2666,21 @@
     flex-direction: column;
   }
 
+  .section-heading-row {
+    gap: 16px;
+  }
+
+  .rental-actions {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .rental-actions .cta-button {
+    width: 100%;
+    text-align: center;
+  }
+
   .planner-grid {
     display: none;
   }
@@ -2570,12 +2691,12 @@
   }
 
   .planner-mobile-slots .planner-slot {
-    min-height: 70px;
-    padding: 9px;
+    min-height: var(--touch-min);
+    padding: 10px;
   }
 
   .planner-mobile-slots .planner-slot span {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
   }
 
   .planner-mobile-slots .planner-slot strong {
@@ -2586,13 +2707,23 @@
     flex-direction: column;
   }
 
+  .cookie-actions .cta-button,
+  .cookie-actions .secondary-button {
+    width: 100%;
+    text-align: center;
+  }
+
   .rental-search {
     width: 100%;
   }
 
+  .rental-card img {
+    height: 180px;
+  }
+
   .gallery-card,
   .gallery-card img {
-    min-height: 220px;
+    min-height: 200px;
   }
 
   .image-modal-backdrop {
@@ -2604,7 +2735,7 @@
   }
 
   .image-modal figure img {
-    height: 62svh;
+    height: 55svh;
   }
 
   .gallery-arrow {
@@ -2632,6 +2763,72 @@
   .gallery-arrow-right {
     right: 16px;
   }
+
+  .repair-cta {
+    gap: 16px;
+    text-align: center;
+  }
+
+  .repair-cta .cta-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .contact-card {
+    order: -1;
+  }
+
+  .appointment-panel,
+  .appointment-admin-panel {
+    padding: 18px;
+  }
+
+  .appointment-item,
+  .appointment-admin-item {
+    padding: 12px;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+  }
+
+  .confirmation-actions .secondary-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .planner-toolbar {
+    gap: 10px;
+  }
+
+  .planner-toolbar .secondary-button {
+    width: 100%;
+    text-align: center;
+    min-height: var(--touch-min);
+  }
+
+  .sale-editor-form {
+    grid-template-columns: 1fr;
+  }
+
+  .sale-editor-wide {
+    grid-column: 1;
+  }
+
+  .modal-close {
+    width: var(--touch-min);
+    height: var(--touch-min);
+    font-size: 1.3rem;
+  }
+
+  .mobile-nav-only {
+    display: inline-flex;
+  }
+
+  .top-bar .hours-button,
+  .top-bar .top-login-link {
+    display: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -2647,9 +2844,9 @@
   }
 
   .hours-button {
-    min-height: 34px;
-    padding: 7px 10px;
-    font-size: 0.8rem;
+    min-height: var(--touch-min);
+    padding: 8px 12px;
+    font-size: 0.82rem;
   }
 
   .top-bar .top-link:not(.top-phone):not(.top-login-link) {
@@ -2657,42 +2854,46 @@
   }
 
   .top-phone {
-    min-height: 34px;
+    min-height: var(--touch-min);
     font-size: 0.88rem;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
   }
 
   .top-login-link {
-    min-height: auto;
-    font-size: 0.78rem;
+    min-height: var(--touch-min);
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
   }
 
   .brand {
     min-width: 0;
     flex: 1 1 auto;
-    gap: 9px;
+    gap: 8px;
   }
 
   .brand-logo {
-    width: 150px;
+    width: 130px;
     height: auto;
   }
 
   .brand strong {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .brand small {
     margin-top: 1px;
-    font-size: 0.66rem;
+    font-size: 0.64rem;
   }
 
   .menu-toggle {
     width: auto;
-    min-height: 36px;
+    min-height: var(--touch-min);
     margin-top: 0;
-    padding: 7px 11px;
-    font-size: 0.86rem;
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
 
   .main-nav {
@@ -2704,6 +2905,154 @@
   }
 
   .hours-modal {
-    padding: 28px 22px;
+    padding: 24px 18px;
+    margin: 12px;
+  }
+
+  .hours-modal h2 {
+    font-size: 1.35rem;
+  }
+
+  .cookie-banner {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    padding: 14px;
+  }
+
+  .cookie-banner h2 {
+    font-size: 1.15rem;
+  }
+
+  .rental-card img {
+    height: 160px;
+  }
+
+  .rental-card div {
+    padding: 14px;
+  }
+
+  .rental-card strong {
+    font-size: 1rem;
+  }
+
+  .gallery-card,
+  .gallery-card img {
+    min-height: 180px;
+  }
+
+  .appointment-modal {
+    padding: 20px 16px;
+  }
+
+  .sale-editor {
+    padding: 20px 16px;
+  }
+
+  .confirmation-modal {
+    padding: 20px 16px;
+  }
+
+  .contact-form,
+  .appointment-form {
+    padding: 18px 14px;
+  }
+
+  .contact-submit {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cta-button {
+    min-height: var(--touch-min);
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+
+  .secondary-button {
+    min-height: var(--touch-min);
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+
+  .planner-mobile-slots {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-hours-row {
+    font-size: 0.82rem;
+  }
+
+  .legal-page h1 {
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
+  }
+
+  .admin-login-panel {
+    padding: 20px 16px;
+  }
+
+  .admin-login-form input {
+    min-height: var(--touch-min);
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-logo {
+    width: 110px;
+  }
+
+  .brand strong {
+    font-size: 0.82rem;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .hero-content h1 {
+    font-size: 1.4rem;
+  }
+
+  .hero-description {
+    font-size: 0.92rem;
+  }
+
+  .page-section h2 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+  }
+
+  .repair-hero h2 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero-section {
+    min-height: auto;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .hero-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-description {
+    font-size: 0.9rem;
+  }
+
+  .modal-backdrop,
+  .image-modal-backdrop,
+  .confirmation-backdrop {
+    align-items: flex-start;
+    padding-top: 12px;
+  }
+
+  .appointment-modal,
+  .sale-editor,
+  .confirmation-modal,
+  .hours-modal {
+    max-height: 90svh;
   }
 }
