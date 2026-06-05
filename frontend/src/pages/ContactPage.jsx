@@ -3,6 +3,8 @@ import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { sendContactMessage } from '../lib/api'
 
 const contactEmail = 'Rcservices68320@gmail.com'
+const address = '3 rue du 1er RCP, 68320 Widensolen, France'
+const mapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(address)}`
 
 const initialFormData = {
   name: '',
@@ -64,7 +66,7 @@ function ContactPage({ onNavigate }) {
   }
 
   return (
-    <section id="contact" className="page-section page-section-muted">
+    <section id="contact" className="page-section page-section-muted reveal">
       <p className="eyebrow">Contact</p>
       <h2>Demander un devis ou un renseignement.</h2>
 
@@ -196,7 +198,9 @@ function ContactPage({ onNavigate }) {
           <h3>Coordonnées</h3>
           <a href="tel:+33630007808">06 30 00 78 08</a>
           <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-          <p>3 rue du 1er RCP, 68320 Widensolen</p>
+          <a href={mapsUrl} target="_blank" rel="noreferrer" className="contact-address-link">
+            {address}
+          </a>
           <a
             href="/rendez-vous"
             className="cta-button contact-appointment-link"
@@ -204,6 +208,15 @@ function ContactPage({ onNavigate }) {
           >
             Prendre rendez-vous
           </a>
+          <div className="contact-map">
+            <iframe
+              title="Localisation RC Services"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
         </aside>
       </div>
     </section>

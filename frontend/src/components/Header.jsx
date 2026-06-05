@@ -15,10 +15,9 @@ const services = [
   ['Pièces et accessoires', '/pieces-accessoires'],
 ]
 
-function Header({ isAuthenticated, onLogout, onNavigate }) {
+function Header({ isAuthenticated, onLogout, onNavigate, currentRoute }) {
   const [isHoursOpen, setIsHoursOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isSocialOpen, setIsSocialOpen] = useState(false)
 
   useEffect(() => {
     if (!isHoursOpen) {
@@ -37,7 +36,6 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
 
   const closeMenu = () => {
     setIsMenuOpen(false)
-    setIsSocialOpen(false)
   }
 
   const goToPage = (event, href) => {
@@ -122,7 +120,11 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
             className={isMenuOpen ? 'main-nav is-open' : 'main-nav'}
             aria-label="Navigation principale"
           >
-            <a href="/" onClick={(event) => goToPage(event, '/')}>
+            <a
+              href="/"
+              className={currentRoute === 'home' ? 'is-active' : ''}
+              onClick={(event) => goToPage(event, '/')}
+            >
               Accueil
             </a>
 
@@ -139,6 +141,7 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
                   <a
                     href={href}
                     key={service}
+                    className={currentRoute === 'repair' && href === '/entretien-reparation' ? 'is-active' : currentRoute === 'rental' && href === '/pieces-accessoires' ? 'is-active' : ''}
                     onClick={(event) => goToPage(event, href)}
                   >
                     {service}
@@ -161,45 +164,38 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
             </a>
             <a
               href="/rendez-vous"
+              className={currentRoute === 'appointments' ? 'is-active' : ''}
               onClick={(event) => goToPage(event, '/rendez-vous')}
             >
               Rendez-vous
             </a>
-            <div className="nav-dropdown social-dropdown">
-              <button
-                type="button"
-                className="social-button"
-                aria-haspopup="true"
-                aria-expanded={isSocialOpen}
-                onClick={() => setIsSocialOpen((open) => !open)}
-              >
-                Réseaux
-              </button>
-              <div
-                className={
-                  isSocialOpen
-                    ? 'submenu social-submenu is-open'
-                    : 'submenu social-submenu'
-                }
-              >
-                <a
-                  href="https://www.instagram.com/rcservice68/"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={closeMenu}
-                >
-                  Instagram
-                </a>
-                <a
-                  href="https://www.tiktok.com/@rcservice68"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={closeMenu}
-                >
-                  TikTok
-                </a>
-              </div>
-            </div>
+
+            <a
+              className="social-icon-link"
+              href="https://www.instagram.com/rcservice68/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram"
+              onClick={closeMenu}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </a>
+            <a
+              className="social-icon-link"
+              href="https://www.tiktok.com/@rcservice68"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="TikTok"
+              onClick={closeMenu}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.27 8.27 0 0 0 4.76 1.5V6.8a4.83 4.83 0 0 1-1-.11z"/>
+              </svg>
+            </a>
           </nav>
         </div>
       </header>

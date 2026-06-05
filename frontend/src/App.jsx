@@ -13,6 +13,7 @@ import LegalPage from './pages/LegalPage'
 import RentalPage from './pages/RentalPage'
 import RepairPage from './pages/RepairPage'
 import ServicesPage from './pages/ServicesPage'
+import { useReveal } from './hooks/useReveal'
 import './App.css'
 
 const routes = {
@@ -52,6 +53,8 @@ function App() {
   const [pendingScrollHash, setPendingScrollHash] = useState(
     () => window.location.hash || null,
   )
+
+  useReveal()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -140,18 +143,22 @@ function App() {
         isAuthenticated={isAuthenticated}
         onLogout={handleLogout}
         onNavigate={navigate}
+        currentRoute={route}
       />
       {route === 'connection' && (
         <ConnectionPage onLoginSuccess={handleLoginSuccess} />
       )}
       {route === 'home' && (
         <>
-          <HomePage />
+          <HomePage onNavigate={navigate} />
+          <svg className="section-divider section-divider-green" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v48C1200 16 240 48 0 16z" fill="currentColor"/></svg>
           <ServicesPage onNavigate={navigate} />
+          <svg className="section-divider section-divider-white" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 48h1440V0C1200 32 240 0 0 32z" fill="currentColor"/></svg>
           <GalleryPage
             isAuthenticated={isAuthenticated}
             onReady={() => setIsGalleryReady(true)}
           />
+          <svg className="section-divider section-divider-green" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1440v48C1200 16 240 48 0 16z" fill="currentColor"/></svg>
           <ContactPage onNavigate={navigate} />
         </>
       )}

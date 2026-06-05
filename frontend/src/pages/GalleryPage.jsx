@@ -157,7 +157,7 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
   }
 
   return (
-    <section id="images" className="page-section">
+    <section id="images" className="page-section reveal">
       <div className="gallery-heading">
         <div>
           <p className="eyebrow">En images</p>
@@ -223,36 +223,50 @@ function GalleryPage({ isAuthenticated = false, onReady }) {
       )}
 
       {visibleGalleryImages.length > 0 && (
-        <div className="gallery-grid" aria-label="Galerie photo">
-          {visibleGalleryImages.map((image, index) => (
-            <article className="gallery-item" key={image.id}>
-              <button
-                type="button"
-                className="gallery-card"
-                onClick={() => setActiveIndex(index)}
-              >
-                <img
-                  src={image.photo_url}
-                  alt={image.title}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span>{image.title}</span>
-              </button>
-
-              {isAdmin && (
+        <>
+          <div className="gallery-grid" aria-label="Galerie photo">
+            {visibleGalleryImages.map((image, index) => (
+              <article className="gallery-item" key={image.id}>
                 <button
                   type="button"
-                  className="secondary-button gallery-delete-button"
-                  onClick={() => removeImage(image)}
-                  disabled={isSaving}
+                  className="gallery-card"
+                  onClick={() => setActiveIndex(index)}
                 >
-                  Supprimer
+                  <img
+                    src={image.photo_url}
+                    alt={image.title}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span>{image.title}</span>
                 </button>
-              )}
-            </article>
-          ))}
-        </div>
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="secondary-button gallery-delete-button"
+                    onClick={() => removeImage(image)}
+                    disabled={isSaving}
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </article>
+            ))}
+          </div>
+
+          {galleryImages.length > visibleGalleryCount && (
+            <div className="gallery-cta-row">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setActiveIndex(visibleGalleryCount)}
+              >
+                Voir toutes les photos ({galleryImages.length})
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {activeImage && (

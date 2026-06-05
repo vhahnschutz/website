@@ -27,7 +27,7 @@ function ServicesPage({ onNavigate }) {
   }
 
   return (
-    <section id="services" className="page-section">
+    <section id="services" className="page-section reveal">
       <p className="eyebrow">Nos services</p>
       <h2>Des prestations claires pour entretenir et équiper vos machines.</h2>
       <div className="service-grid">
