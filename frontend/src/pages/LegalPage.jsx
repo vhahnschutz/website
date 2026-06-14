@@ -16,13 +16,13 @@ const legalContent = {
       {
         title: 'Responsable de publication',
         text: [
-          'Responsable de publication : à compléter avec le nom du responsable légal du site.',
+          'Responsable de publication : RC services.',
         ],
       },
       {
         title: 'Hébergement',
         text: [
-          "Hébergeur du site : à compléter avec le nom, l'adresse et les coordonnées de l'hébergeur choisi.",
+          "Hébergeur du site : supabase, vercel.",
         ],
       },
       {

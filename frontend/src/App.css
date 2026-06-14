@@ -97,6 +97,11 @@
   color: inherit;
 }
 
+.top-bar .top-link {
+  min-height: auto;
+  overflow: visible;
+}
+
 .top-link::before {
   position: absolute;
   right: 0;
@@ -108,6 +113,10 @@
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 180ms ease;
+}
+
+.top-bar .top-link::before {
+  bottom: -2px;
 }
 
 .top-link:hover::before,
@@ -1193,11 +1202,45 @@
 }
 
 .appointment-page-intro {
-  padding-bottom: 34px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 clamp(18px, 5vw, 56px) 14px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.appointment-page-intro .eyebrow {
+  margin-bottom: 6px;
+  color: var(--green-dark);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+}
+
+.appointment-page-intro h1 {
+  max-width: 100%;
+  font-size: clamp(2.2rem, 6.2vw, 3.4rem);
+  line-height: 1.1;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .appointment-page-intro h1 {
+    white-space: normal;
+    padding: 0;
+  }
+}
+
+.appointment-page-intro p {
+  max-width: 680px;
+  margin: 6px auto 0;
 }
 
 .appointment-planner-section {
-  padding-top: 24px;
+  padding-top: 16px;
 }
 
 .planner-toolbar {
@@ -1208,11 +1251,52 @@
   margin-bottom: 18px;
 }
 
-.planner-toolbar strong {
+.planner-week-label {
   color: var(--green-dark);
   font-family: var(--heading);
   font-size: clamp(1.25rem, 3vw, 1.8rem);
   text-align: center;
+}
+
+.planner-week-button {
+  display: inline-flex;
+  min-width: 148px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-color: rgba(50, 107, 53, 0.18);
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(23, 58, 34, 0.08);
+}
+
+.planner-week-button span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-weight: 950;
+  line-height: 1;
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.planner-week-button:hover span,
+.planner-week-button:focus-visible span {
+  background: var(--green-bright);
+}
+
+.planner-week-button-previous:hover span,
+.planner-week-button-previous:focus-visible span {
+  transform: translateX(-2px);
+}
+
+.planner-week-button-next:hover span,
+.planner-week-button-next:focus-visible span {
+  transform: translateX(2px);
 }
 
 .planner-grid {
@@ -1225,6 +1309,84 @@
 
 .planner-mobile-list {
   display: none;
+}
+
+.planner-mobile-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(50, 107, 53, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 28px rgba(23, 58, 34, 0.08);
+}
+
+.planner-mobile-day-tab {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: var(--touch-min);
+  align-content: center;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 4px;
+  color: var(--green-dark);
+  background: transparent;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.planner-mobile-day-tab span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.planner-mobile-day-tab strong {
+  font-size: 1rem;
+  line-height: 1.05;
+}
+
+.planner-mobile-day-tab:hover,
+.planner-mobile-day-tab:focus-visible {
+  border-color: rgba(50, 107, 53, 0.24);
+  background: rgba(237, 245, 223, 0.82);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.planner-mobile-day-tab.is-selected {
+  color: #fff;
+  border-color: var(--green-dark);
+  background: var(--green-dark);
+  box-shadow: 0 10px 20px rgba(23, 58, 34, 0.18);
+}
+
+.planner-mobile-day-tab.is-selected span {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.planner-mobile-day-tab.is-today::after {
+  position: absolute;
+  right: 7px;
+  bottom: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  content: '';
+  background: var(--green-bright);
 }
 
 .planner-corner,
@@ -1344,6 +1506,7 @@
   border-radius: 8px;
   background: #fff;
   overflow: hidden;
+  box-shadow: 0 14px 30px rgba(23, 58, 34, 0.1);
 }
 
 .planner-mobile-day header {
@@ -1356,6 +1519,11 @@
   background: var(--green-dark);
 }
 
+.planner-mobile-day header div {
+  display: grid;
+  gap: 2px;
+}
+
 .planner-mobile-day header strong {
   font-family: var(--heading);
   font-size: 1.12rem;
@@ -1364,6 +1532,17 @@
 .planner-mobile-day header span {
   color: rgba(255, 255, 255, 0.78);
   font-weight: 850;
+}
+
+.planner-mobile-day header em {
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--green-dark);
+  background: var(--green-bright);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .planner-mobile-slots {
@@ -2801,10 +2980,27 @@
     gap: 10px;
   }
 
+  .appointment-planner-section .planner-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .planner-week-label {
+    grid-column: 1 / -1;
+    order: -1;
+    font-size: clamp(1.15rem, 6vw, 1.55rem);
+  }
+
   .planner-toolbar .secondary-button {
     width: 100%;
     text-align: center;
     min-height: var(--touch-min);
+  }
+
+  .planner-week-button {
+    min-width: 0;
+    padding-inline: 10px;
   }
 
   .sale-editor-form {
@@ -2838,9 +3034,13 @@
 
   .top-bar-center {
     display: grid;
-    grid-template-columns: 1fr auto;
-    width: 100%;
-    gap: 6px 10px;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    gap: 8px;
+    margin: 0 auto;
   }
 
   .hours-button {
@@ -2849,12 +3049,22 @@
     font-size: 0.82rem;
   }
 
-  .top-bar .top-link:not(.top-phone):not(.top-login-link) {
+  .top-bar .top-link:not(.top-phone):not(.top-login-link):not(.top-address) {
     display: none;
   }
 
+  .top-address {
+    grid-column: 2;
+    min-width: 0;
+    min-height: auto;
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
   .top-phone {
-    min-height: var(--touch-min);
+    grid-column: 1;
+    grid-row: 1;
+    min-height: auto;
     font-size: 0.88rem;
     white-space: nowrap;
     display: inline-flex;

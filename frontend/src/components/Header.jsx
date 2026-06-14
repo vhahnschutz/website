@@ -65,7 +65,7 @@ function Header({ isAuthenticated, onLogout, onNavigate }) {
             </button>
 
             <a
-              className="top-link"
+              className="top-link top-address"
               href="https://maps.google.com/?q=3%20rue%20du%201er%20RCP%2C%2068320%20Widensolen"
               target="_blank"
               rel="noreferrer"

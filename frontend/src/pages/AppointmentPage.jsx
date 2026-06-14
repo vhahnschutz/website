@@ -69,6 +69,16 @@ function getMonday(date) {
   return start
 }
 
+function getWeekDayIndex(date) {
+  return (date.getDay() || 7) - 1
+}
+
+function isSameDay(firstDate, secondDate) {
+  return firstDate.getFullYear() === secondDate.getFullYear()
+    && firstDate.getMonth() === secondDate.getMonth()
+    && firstDate.getDate() === secondDate.getDate()
+}
+
 function formatDate(value) {
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
@@ -127,6 +137,7 @@ function buildWeekSlots(weekStart) {
 
 function AppointmentPage({ isAuthenticated = false }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const [selectedDayIndex, setSelectedDayIndex] = useState(() => getWeekDayIndex(new Date()))
   const [availability, setAvailability] = useState([])
   const [appointmentSlots, setAppointmentSlots] = useState([])
   const [adminAppointments, setAdminAppointments] = useState([])
@@ -144,6 +155,7 @@ function AppointmentPage({ isAuthenticated = false }) {
   const hcaptchaRef = useRef(null)
 
   const weekSlots = useMemo(() => buildWeekSlots(weekStart), [weekStart])
+  const selectedMobileDay = weekSlots[selectedDayIndex] ?? weekSlots[0]
 
   const appointmentSlotsByTime = useMemo(() => appointmentSlots.reduce((slotsMap, slot) => {
     slotsMap.set(new Date(slot.starts_at).getTime(), slot)
@@ -464,15 +476,27 @@ function AppointmentPage({ isAuthenticated = false }) {
 
       <section className="page-section appointment-planner-section">
         <div className="planner-toolbar">
-          <button type="button" className="secondary-button" onClick={goToPreviousWeek}>
-            Semaine precedente
+          <button
+            type="button"
+            className="secondary-button planner-week-button planner-week-button-previous"
+            aria-label="Afficher la semaine précédente"
+            onClick={goToPreviousWeek}
+          >
+            <span aria-hidden="true">←</span>
+            Précédente
           </button>
-          <strong>
+          <strong className="planner-week-label">
             Semaine du {formatDate(weekStart)} au{' '}
             {formatDate(weekSlots[6].date)}
           </strong>
-          <button type="button" className="secondary-button" onClick={goToNextWeek}>
-            Semaine suivante
+          <button
+            type="button"
+            className="secondary-button planner-week-button planner-week-button-next"
+            aria-label="Afficher la semaine suivante"
+            onClick={goToNextWeek}
+          >
+            Suivante
+            <span aria-hidden="true">→</span>
           </button>
         </div>
 
@@ -505,22 +529,50 @@ function AppointmentPage({ isAuthenticated = false }) {
         </div>
 
         <div className="planner-mobile-list" aria-label="Planning des rendez-vous mobile">
-          {weekSlots.map((day) => (
-            <section className="planner-mobile-day" key={`mobile-${day.dayLabel}`}>
-              <header>
-                <strong>{day.dayLabel}</strong>
-                <span>{formatDate(day.date)}</span>
-              </header>
-              <div className="planner-mobile-slots">
-                {day.slots.map((slot) => renderSlotButton(
-                  slot,
-                  day.dayLabel,
-                  slot.getHours(),
-                  'mobile',
-                ))}
+          <div className="planner-mobile-days" aria-label="Choisir un jour">
+            {weekSlots.map((day, dayIndex) => {
+              const today = new Date()
+              const isSelected = dayIndex === selectedDayIndex
+              const isToday = isSameDay(day.date, today)
+
+              return (
+                <button
+                  type="button"
+                  className={[
+                    'planner-mobile-day-tab',
+                    isSelected ? 'is-selected' : '',
+                    isToday ? 'is-today' : '',
+                  ].filter(Boolean).join(' ')}
+                  key={`mobile-tab-${day.dayLabel}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedDayIndex(dayIndex)}
+                >
+                  <span>{day.dayLabel.slice(0, 3)}</span>
+                  <strong>{day.date.getDate()}</strong>
+                </button>
+              )
+            })}
+          </div>
+
+          <section className="planner-mobile-day" key={`mobile-${selectedMobileDay.dayLabel}`}>
+            <header>
+              <div>
+                <strong>{selectedMobileDay.dayLabel}</strong>
+                <span>{formatDate(selectedMobileDay.date)}</span>
               </div>
-            </section>
-          ))}
+              {isSameDay(selectedMobileDay.date, new Date()) && (
+                <em>Aujourd'hui</em>
+              )}
+            </header>
+            <div className="planner-mobile-slots">
+              {selectedMobileDay.slots.map((slot) => renderSlotButton(
+                slot,
+                selectedMobileDay.dayLabel,
+                slot.getHours(),
+                'mobile',
+              ))}
+            </div>
+          </section>
         </div>
       </section>
 
